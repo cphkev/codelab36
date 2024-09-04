@@ -17,7 +17,7 @@ public class Course {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "description", nullable = false)
+    @Column(name = "course_name", nullable = false)
     private String description;
 
     @Column(name = "start_date", nullable = false)
