@@ -9,8 +9,10 @@ import java.util.Set;
 @Entity
 @Table(name = "students")
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
+@Builder
 @ToString
 @NamedQueries({
         @NamedQuery(name = "Student.findAll", query = "SELECT s FROM Student s"),

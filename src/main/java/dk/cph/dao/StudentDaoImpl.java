@@ -16,6 +16,11 @@ public class StudentDaoImpl implements  GenericDAO<Student, Integer> {
     private static StudentDaoImpl instance;
     private static EntityManagerFactory emf;
 
+    public StudentDaoImpl(EntityManagerFactory emf) {
+        this.emf = emf;
+    }
+
+
     public static StudentDaoImpl getInstance(EntityManagerFactory _emf) {
         if (instance == null) {
             emf = _emf;

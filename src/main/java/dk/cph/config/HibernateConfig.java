@@ -1,7 +1,9 @@
 package dk.cph.config;
 
+import dk.cph.model.Course;
+import dk.cph.model.Student;
+import dk.cph.model.Teacher;
 import jakarta.persistence.EntityManagerFactory;
-import lombok.NoArgsConstructor;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
@@ -9,62 +11,99 @@ import org.hibernate.service.ServiceRegistry;
 
 import java.util.Properties;
 
-
-@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
+/**
+ * Purpose: This class is used to configure Hibernate and create an EntityManagerFactory.
+ * Author: Thomas Hartmann
+ */
 public class HibernateConfig {
+    private static EntityManagerFactory emf;
+    private static boolean isIntegrationTest = false; // this flag is set for
+    public static void setTestMode(boolean isTest) {
+        HibernateConfig.isIntegrationTest = isTest;
+    }
 
-    private static EntityManagerFactory entityManagerFactory;
-    private static String dbName;
+    private static String dbname = "university";
 
-    private static EntityManagerFactory buildEntityFactoryConfig() {
+    private static EntityManagerFactory emfTest;
+    public static EntityManagerFactory getEntityManagerFactory() {
+        if (emf == null)
+            emf = createEMF(false);
+        return emf;
+    }
+    public static EntityManagerFactory getEntityManagerFactoryForTest() {
+        if (emfTest == null)
+            emfTest = createEMF(true);
+        return emfTest;
+    }
+    // TODO: IMPORTANT: Add Entity classes here for them to be registered with Hibernate
+    private static void getAnnotationConfiguration(Configuration configuration) {
+        configuration.addAnnotatedClass(Student.class);
+        configuration.addAnnotatedClass(Course.class);
+        configuration.addAnnotatedClass(Teacher.class);
+    }
+
+    private static EntityManagerFactory createEMF(boolean forTest) {
         try {
             Configuration configuration = new Configuration();
-
             Properties props = new Properties();
-            String connctionURL = String.format("jdbc:postgresql://localhost:5432/%s?currentSchema=public", dbName);
-            props.put("hibernate.connection.url", connctionURL);
-            props.put("hibernate.connection.username", "postgres");
-            props.put("hibernate.connection.password", "postgres");
-            props.put("hibernate.show_sql", "true"); // show sql in console
-            props.put("hibernate.format_sql", "true"); // format sql in console
-            props.put("hibernate.use_sql_comments", "true"); // show sql comments in console
+            // Set the properties
+            setBaseProperties(props);
+            if(forTest || isIntegrationTest) {
+                props = setTestProperties(props);
+            }
+            else if(System.getenv("DEPLOYED") != null) {
+                setDeployedProperties(props);
+            }
+            else {
+                props = setDevProperties(props);
+            }
+            configuration.setProperties(props);
+            getAnnotationConfiguration(configuration);
 
-            props.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect"); // dialect for postgresql
-            props.put("hibernate.connection.driver_class", "org.postgresql.Driver"); // driver class for postgresql
-            props.put("hibernate.archive.autodetection", "class"); // hibernate scans for annotated classes
-            props.put("hibernate.current_session_context_class", "thread"); // hibernate current session context
-            props.put("hibernate.hbm2ddl.auto", "update"); // hibernate creates tables based on entities
-
-
-            return getEntityManagerFactory(configuration, props);
+            ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties()).build();
+            SessionFactory sf = configuration.buildSessionFactory(serviceRegistry);
+            EntityManagerFactory emf = sf.unwrap(EntityManagerFactory.class);
+            return emf;
         } catch (Throwable ex) {
             System.err.println("Initial SessionFactory creation failed." + ex);
             throw new ExceptionInInitializerError(ex);
         }
     }
 
-    private static EntityManagerFactory getEntityManagerFactory(Configuration configuration, Properties props) {
-        configuration.setProperties(props);
 
-        getAnnotationConfiguration(configuration);
 
-        ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties()).build();
-        System.out.println("Hibernate Java Config serviceRegistry created");
-
-        SessionFactory sf = configuration.buildSessionFactory(serviceRegistry);
-        return sf.unwrap(EntityManagerFactory.class);
+    private static Properties setBaseProperties(Properties props){
+        props.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+        props.put("hibernate.connection.driver_class", "org.postgresql.Driver");
+        props.put("hibernate.hbm2ddl.auto", "update");
+        props.put("hibernate.current_session_context_class", "thread");
+        props.put("hibernate.show_sql", "true");
+        props.put("hibernate.format_sql", "true");
+        props.put("hibernate.use_sql_comments", "true");
+        return props;
     }
 
-    private static void getAnnotationConfiguration(Configuration configuration) {
-        // add annotated classes
-        //configuration.addAnnotatedClass(Person.class);
-        //configuration.addAnnotatedClass(PersonDetail.class);
-        //configuration.addAnnotatedClass(Fee.class);
+    private static Properties setDeployedProperties(Properties props){
+        props.setProperty("hibernate.connection.url", System.getenv("CONNECTION_STR") + dbname);
+        props.setProperty("hibernate.connection.username", System.getenv("DB_USERNAME"));
+        props.setProperty("hibernate.connection.password", System.getenv("DB_PASSWORD"));
+        return props;
     }
-
-    public static EntityManagerFactory getEntityManagerFactoryConfig(String name) {
-        dbName = name;
-        if (entityManagerFactory == null) entityManagerFactory = buildEntityFactoryConfig();
-        return entityManagerFactory;
+    private static Properties setDevProperties(Properties props){
+        props.put("hibernate.connection.url", "jdbc:postgresql://localhost:5432/"+ dbname);
+        props.put("hibernate.connection.username", "postgres");
+        props.put("hibernate.connection.password", "postgres");
+        return props;
+    }
+    private static Properties setTestProperties(Properties props){
+//        props.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+        props.put("hibernate.connection.driver_class", "org.testcontainers.jdbc.ContainerDatabaseDriver");
+        props.put("hibernate.connection.url", "jdbc:tc:postgresql:15.3-alpine3.18:///test_db");
+        props.put("hibernate.connection.username", "postgres");
+        props.put("hibernate.connection.password", "postgres");
+        props.put("hibernate.archive.autodetection", "class");
+        props.put("hibernate.show_sql", "true");
+        props.put("hibernate.hbm2ddl.auto", "create-drop");
+        return props;
     }
 }
