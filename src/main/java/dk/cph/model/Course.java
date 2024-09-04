@@ -10,10 +10,12 @@ import java.time.LocalDate;
 @Table(name = "courses")
 @NoArgsConstructor
 @Getter
+@Setter
 @ToString
 public class Course {
 
     @Id
+    @Setter(AccessLevel.NONE)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
@@ -25,6 +27,21 @@ public class Course {
 
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
+
+    @Enumerated(EnumType.STRING)
+    private  CourseName courseName;
+    public enum CourseName{
+        SPORTS,
+        MATH,
+        ENGLISH,
+        SCIENCE,
+        ART,
+        MUSIC,
+        HISTORY
+    }
+
+    @ManyToOne
+    private Teacher teacher;
 
 }
 
