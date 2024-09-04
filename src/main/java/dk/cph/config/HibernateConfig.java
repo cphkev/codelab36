@@ -1,5 +1,8 @@
 package dk.cph.config;
 
+import dk.cph.model.Course;
+import dk.cph.model.Student;
+import dk.cph.model.Teacher;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.NoArgsConstructor;
 import org.hibernate.SessionFactory;
@@ -57,9 +60,9 @@ public class HibernateConfig {
 
     private static void getAnnotationConfiguration(Configuration configuration) {
         // add annotated classes
-        //configuration.addAnnotatedClass(Person.class);
-        //configuration.addAnnotatedClass(PersonDetail.class);
-        //configuration.addAnnotatedClass(Fee.class);
+        configuration.addAnnotatedClass(Course.class);
+        configuration.addAnnotatedClass(Student.class);
+        configuration.addAnnotatedClass(Teacher.class);
     }
 
     public static EntityManagerFactory getEntityManagerFactoryConfig(String name) {
