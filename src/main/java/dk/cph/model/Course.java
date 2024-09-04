@@ -17,6 +17,7 @@ import java.util.Set;
 public class Course {
 
     @Id
+    @Setter(AccessLevel.NONE)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
@@ -28,6 +29,7 @@ public class Course {
 
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
+
 
     //enum Coursename
     @Column(name = "coursename", nullable = false)
@@ -44,8 +46,13 @@ public class Course {
         HISTORY
     }
 
+
+    @ManyToOne
+    private Teacher teacher;
+
     @ManyToMany(mappedBy = "courses", cascade = CascadeType.ALL)
     private Set<Student> students = new HashSet<>();
+
 
 
 
