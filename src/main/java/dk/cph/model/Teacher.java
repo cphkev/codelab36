@@ -2,9 +2,9 @@ package dk.cph.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.HashSet;
 import java.util.Set;
+import java.util.HashSet;
+
 
 
 @Entity
@@ -41,7 +41,5 @@ public class Teacher {
             course.setTeacher(this);
         }
     }
-
-
 
 }
